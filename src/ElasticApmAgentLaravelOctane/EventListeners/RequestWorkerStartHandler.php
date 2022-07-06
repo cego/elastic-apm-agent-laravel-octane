@@ -17,7 +17,8 @@ class RequestWorkerStartHandler
     public function handle(WorkerStarting $event): void
     {
         $transaction = ElasticApm::getCurrentTransaction();
-        if (! $transaction->hasEnded()) {
+
+        if ( ! $transaction->hasEnded()) {
             $transaction->setName('WorkerStart');
         }
 

@@ -2,8 +2,8 @@
 
 namespace Cego\ElasticApmAgentLaravelOctane;
 
-use Elastic\Apm\ElasticApm;
 use BadMethodCallException;
+use Elastic\Apm\ElasticApm;
 use InvalidArgumentException;
 use Elastic\Apm\SpanInterface;
 use Elastic\Apm\TransactionInterface;
@@ -54,7 +54,7 @@ class OctaneApmManager
         }
 
         // If there is a hanging transaction, then discard it.
-        if (! isset($this->transaction) && ! ElasticApm::getCurrentTransaction()->hasEnded()) {
+        if ( ! isset($this->transaction) && ! ElasticApm::getCurrentTransaction()->hasEnded()) {
             ElasticApm::getCurrentTransaction()->discard();
         }
 
@@ -99,7 +99,7 @@ class OctaneApmManager
             return;
         }
 
-        if (! isset($this->spans[$name])) {
+        if ( ! isset($this->spans[$name])) {
             throw new InvalidArgumentException('No stored span with name [%s] exists');
         }
 
@@ -150,7 +150,7 @@ class OctaneApmManager
             throw new BadMethodCallException('Cannot start transaction before it has been started');
         }
 
-        if (! $this->transaction->hasEnded()) {
+        if ( ! $this->transaction->hasEnded()) {
             $this->transaction->end();
         }
     }
