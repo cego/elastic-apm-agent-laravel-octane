@@ -2,9 +2,8 @@
 
 namespace Cego\ElasticApmAgentLaravelOctane\EventListeners;
 
-use Elastic\Apm\SpanInterface;
-use Elastic\Apm\TransactionInterface;
 use Laravel\Octane\Events\RequestHandled;
+use Cego\ElasticApmAgentLaravelOctane\OctaneApmManager;
 
 class RequestHandledHandler
 {
@@ -17,8 +16,6 @@ class RequestHandledHandler
      */
     public function handle(RequestHandled $event): void
     {
-        /** @var SpanInterface $span */
-        $span = $event->sandbox->make(SpanInterface::class);
-        $span->end();
+        $event->sandbox->make(OctaneApmManager::class)->endStoredSpan('RequestResponse');
     }
 }
