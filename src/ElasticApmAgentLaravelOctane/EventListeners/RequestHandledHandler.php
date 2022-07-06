@@ -1,13 +1,12 @@
 <?php
 
-namespace App\Octane\Listeners;
+namespace Cego\ElasticApmAgentLaravelOctane\ElasticApmAgentLaravelOctane\EventListeners;
 
-use Elastic\Apm\ElasticApm;
-use Illuminate\Support\Facades\Log;
+use Elastic\Apm\SpanInterface;
+use Elastic\Apm\TransactionInterface;
 use Laravel\Octane\Events\RequestHandled;
-use Laravel\Octane\Events\RequestReceived;
 
-class ElasticApmRequestHandledHandler
+class RequestHandledHandler
 {
     /**
      * Handle the event.
@@ -18,6 +17,8 @@ class ElasticApmRequestHandledHandler
      */
     public function handle(RequestHandled $event): void
     {
-        $event->sandbox['ElasticApmRequestSpan']->end();
+        /** @var SpanInterface $span */
+        $span = $event->sandbox->make(SpanInterface::class);
+        $span->end();
     }
 }

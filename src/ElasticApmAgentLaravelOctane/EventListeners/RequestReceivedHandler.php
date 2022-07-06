@@ -1,12 +1,13 @@
 <?php
 
-namespace App\Octane\Listeners;
+namespace Cego\ElasticApmAgentLaravelOctane\ElasticApmAgentLaravelOctane\EventListeners;
 
 use Elastic\Apm\ElasticApm;
-use Illuminate\Support\Facades\Log;
+use Elastic\Apm\SpanInterface;
+use Elastic\Apm\TransactionInterface;
 use Laravel\Octane\Events\RequestReceived;
 
-class ElasticApmRequestReceivedHandler
+class RequestReceivedHandler
 {
     /**
      * Handle the event.
@@ -19,21 +20,19 @@ class ElasticApmRequestReceivedHandler
     {
         $txName = $event->request->method() . ' ' . $event->request->path();
 
-        Log::info(__METHOD__ . ' ' . class_basename($event) . ': ' . $txName);
+        $transaction = ElasticApm::getCurrentTransaction();
 
-        if (! ElasticApm::getCurrentTransaction()->hasEnded()) {
-            ElasticApm::getCurrentTransaction()->discard();
+        if (! $transaction->hasEnded()) {
+            $transaction->discard();
         }
 
-        $event->sandbox['ElasticApmTransaction'] = ElasticApm::beginCurrentTransaction(
+        $event->sandbox->instance(TransactionInterface::class, $transaction = ElasticApm::beginCurrentTransaction(
             $txName,
             'request'
-        );
-
-        $span = ElasticApm::getCurrentTransaction()->beginChildSpan(
-            'child_span_name',
-            'child_span_type'
-        );
-        $event->sandbox['ElasticApmRequestSpan'] = $span;
+        ));
+        $event->sandbox->instance(SpanInterface::class, $transaction->beginChildSpan(
+            'RequestResponse',
+            'request'
+        ));
     }
 }

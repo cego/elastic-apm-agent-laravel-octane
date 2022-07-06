@@ -1,12 +1,11 @@
 <?php
 
-namespace App\Octane\Listeners;
+namespace Cego\ElasticApmAgentLaravelOctane\ElasticApmAgentLaravelOctane\EventListeners;
 
 use Elastic\Apm\ElasticApm;
-use Illuminate\Support\Facades\Log;
 use Laravel\Octane\Events\WorkerStarting;
 
-class ElasticApmWorkerStartingHandler
+class RequestWorkerStartHandler
 {
     /**
      * Handle the event.
@@ -17,12 +16,11 @@ class ElasticApmWorkerStartingHandler
      */
     public function handle(WorkerStarting $event): void
     {
-        if (! ElasticApm::getCurrentTransaction()->hasEnded()) {
-            ElasticApm::getCurrentTransaction()->setName('WorkerStart');
+        $transaction = ElasticApm::getCurrentTransaction();
+        if (! $transaction->hasEnded()) {
+            $transaction->setName('WorkerStart');
         }
 
-        Log::info(__METHOD__ . ' ' . class_basename($event));
-
-        ElasticApm::getCurrentTransaction()->end();
+        $transaction->end();
     }
 }

@@ -1,26 +1,23 @@
 <?php
 
-namespace App\Octane\Listeners;
+namespace Cego\ElasticApmAgentLaravelOctane\ElasticApmAgentLaravelOctane\EventListeners;
 
-use Elastic\Apm\ElasticApm;
-use Elastic\Apm\Impl\GlobalTracerHolder;
-use Illuminate\Support\Facades\Log;
+use Elastic\Apm\TransactionInterface;
 use Laravel\Octane\Events\RequestTerminated;
 
-class ElasticApmRequestTerminatedHandler
+class RequestTerminatedHandler
 {
     /**
      * Handle the event.
      *
-     * @param  mixed  $event
+     * @param  RequestTerminated  $event
      *
      * @return void
      */
-    public function handle(object $event): void
+    public function handle(RequestTerminated $event): void
     {
-        Log::info(__METHOD__ . ' ' . class_basename($event));
-        $tx = $event->sandbox['ElasticApmTransaction'];
-        Log::info(__METHOD__ . ' sandbox[ElasticApmTransaction] is: ' . class_basename($tx));
-        $tx->end();
+        /** @var TransactionInterface $transaction */
+        $transaction = $event->sandbox->make(TransactionInterface::class);
+        $transaction->end();
     }
 }
