@@ -1,0 +1,24 @@
+{
+    "name": "cego/elastic-apm-agent-laravel-octane",
+    "description": "Links APM transactions to Octane Requests and Tasks",
+    "type": "library",
+    "require": {
+        "php": "^8.0"
+    },
+    "require-dev": {
+        "cego/php-cs-fixer": "^0.1.5",
+        "cego/phpstan": "^2.4"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Cego\\ElasticApmAgentLaravelOctane\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Lau Ernebjerg Josefsen",
+            "email": "lejo@cego.dk"
+        }
+    ]
+}
