@@ -23,6 +23,8 @@ class ElasticApmAgentLaravelOctaneServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // NOTE: It is NOT allowed to resolve the OctaneApmManager outside the sandbox.
+        // Doing this would make the Manager a singleton across all workers and thereby all requests.
         $this->app->singleton(OctaneApmManager::class, function () {
             return new OctaneApmManager();
         });
