@@ -3,7 +3,8 @@
     "description": "Links APM transactions to Octane Requests and Tasks",
     "type": "library",
     "require": {
-        "php": "^8.0"
+        "php": "^8.0",
+        "laravel/octane": "^1.2"
     },
     "require-dev": {
         "cego/php-cs-fixer": "^0.1.5",
@@ -20,5 +21,12 @@
             "name": "Lau Ernebjerg Josefsen",
             "email": "lejo@cego.dk"
         }
-    ]
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Cego\\ElasticApmAgentLaravelOctane\\ElasticApmAgentLaravelOctaneServiceProvider"
+            ]
+        }
+    }
 }
