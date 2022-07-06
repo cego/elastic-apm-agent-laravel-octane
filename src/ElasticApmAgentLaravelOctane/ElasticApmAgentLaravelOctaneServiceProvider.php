@@ -1,11 +1,11 @@
 <?php
 
-namespace Cego\ElasticApmAgentLaravelOctane\ElasticApmAgentLaravelOctane;
+namespace Cego\ElasticApmAgentLaravelOctane;
 
-use Cego\ElasticApmAgentLaravelOctane\ElasticApmAgentLaravelOctane\EventListeners\RequestHandledHandler;
-use Cego\ElasticApmAgentLaravelOctane\ElasticApmAgentLaravelOctane\EventListeners\RequestReceivedHandler;
-use Cego\ElasticApmAgentLaravelOctane\ElasticApmAgentLaravelOctane\EventListeners\RequestTerminatedHandler;
-use Cego\ElasticApmAgentLaravelOctane\ElasticApmAgentLaravelOctane\EventListeners\RequestWorkerStartHandler;
+use Cego\ElasticApmAgentLaravelOctane\EventListeners\RequestHandledHandler;
+use Cego\ElasticApmAgentLaravelOctane\EventListeners\RequestReceivedHandler;
+use Cego\ElasticApmAgentLaravelOctane\EventListeners\RequestTerminatedHandler;
+use Cego\ElasticApmAgentLaravelOctane\EventListeners\RequestWorkerStartHandler;
 use Illuminate\Contracts\Events\Dispatcher;
 use Laravel\Octane\Events\RequestHandled;
 use Laravel\Octane\Events\RequestReceived;

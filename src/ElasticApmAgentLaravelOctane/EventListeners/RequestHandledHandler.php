@@ -1,6 +1,6 @@
 <?php
 
-namespace Cego\ElasticApmAgentLaravelOctane\ElasticApmAgentLaravelOctane\EventListeners;
+namespace Cego\ElasticApmAgentLaravelOctane\EventListeners;
 
 use Elastic\Apm\SpanInterface;
 use Elastic\Apm\TransactionInterface;
