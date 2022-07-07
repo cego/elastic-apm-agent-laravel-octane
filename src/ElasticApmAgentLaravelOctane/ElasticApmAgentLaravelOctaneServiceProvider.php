@@ -2,8 +2,6 @@
 
 namespace Cego\ElasticApmAgentLaravelOctane;
 
-use Cego\ElasticApmAgentLaravelOctane\EventListeners\RequestReceivedHandler;
-use Cego\ElasticApmAgentLaravelOctane\EventListeners\TaskReceivedHandler;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Octane\Events\TaskReceived;
 use Laravel\Octane\Events\TickReceived;
@@ -15,8 +13,10 @@ use Laravel\Octane\Events\RequestReceived;
 use Illuminate\Contracts\Events\Dispatcher;
 use Laravel\Octane\Events\RequestTerminated;
 use Illuminate\Contracts\Container\BindingResolutionException;
+use Cego\ElasticApmAgentLaravelOctane\EventListeners\TaskReceivedHandler;
 use Cego\ElasticApmAgentLaravelOctane\EventListeners\TickReceivedHandler;
 use Cego\ElasticApmAgentLaravelOctane\EventListeners\RequestHandledHandler;
+use Cego\ElasticApmAgentLaravelOctane\EventListeners\RequestReceivedHandler;
 use Cego\ElasticApmAgentLaravelOctane\EventListeners\DefaultTerminatedHandler;
 use Cego\ElasticApmAgentLaravelOctane\EventListeners\RequestWorkerStartHandler;
 
