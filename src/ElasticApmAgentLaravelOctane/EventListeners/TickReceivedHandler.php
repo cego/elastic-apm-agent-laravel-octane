@@ -19,6 +19,6 @@ class TickReceivedHandler
         /** @var OctaneApmManager $manager */
         $manager = $event->sandbox->make(OctaneApmManager::class);
 
-        $manager->beginTransaction();
+        $manager->beginTransaction('Tick');
     }
 }

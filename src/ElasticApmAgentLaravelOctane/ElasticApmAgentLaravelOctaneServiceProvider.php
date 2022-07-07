@@ -52,7 +52,7 @@ class ElasticApmAgentLaravelOctaneServiceProvider extends ServiceProvider
         $dispatcher->listen(WorkerStarting::class, RequestWorkerStartHandler::class);
         $dispatcher->listen(TaskReceived::class, TickReceivedHandler::class);
         $dispatcher->listen(TaskTerminated::class, DefaultTerminatedHandler::class);
-        $dispatcher->listen(TickReceived::class);
+        $dispatcher->listen(TickReceived::class, TickReceivedHandler::class);
         $dispatcher->listen(TickTerminated::class, DefaultTerminatedHandler::class);
     }
 }
