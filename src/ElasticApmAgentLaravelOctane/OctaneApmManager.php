@@ -44,10 +44,11 @@ class OctaneApmManager
      * Begins a new transaction or returns the current transaction
      *
      * @param string $name
+     * @param string $type
      *
      * @return TransactionInterface|null
      */
-    public function beginTransaction(string $name): ?TransactionInterface
+    public function beginTransaction(string $name, string $type): ?TransactionInterface
     {
         if ($this->disabled) {
             return null;
@@ -58,7 +59,7 @@ class OctaneApmManager
             ElasticApm::getCurrentTransaction()->discard();
         }
 
-        return $this->transaction ??= ElasticApm::beginCurrentTransaction($name, 'request');
+        return $this->transaction ??= ElasticApm::beginCurrentTransaction($name, $type);
     }
 
     /**

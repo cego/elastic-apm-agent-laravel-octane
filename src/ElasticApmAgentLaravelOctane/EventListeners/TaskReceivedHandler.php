@@ -19,6 +19,6 @@ class TaskReceivedHandler
         /** @var OctaneApmManager $manager */
         $manager = $event->sandbox->make(OctaneApmManager::class);
 
-        $manager->beginTransaction('Task');
+        $manager->beginTransaction('Task', 'task');
     }
 }
