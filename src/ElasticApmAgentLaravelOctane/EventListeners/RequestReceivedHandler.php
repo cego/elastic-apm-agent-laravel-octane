@@ -2,10 +2,8 @@
 
 namespace Cego\ElasticApmAgentLaravelOctane\EventListeners;
 
-use Elastic\Apm\ElasticApm;
-use Elastic\Apm\SpanInterface;
-use Elastic\Apm\TransactionInterface;
 use Laravel\Octane\Events\RequestReceived;
+use Cego\ElasticApmAgentLaravelOctane\OctaneApmManager;
 
 class RequestReceivedHandler
 {
@@ -18,21 +16,9 @@ class RequestReceivedHandler
      */
     public function handle(RequestReceived $event): void
     {
-        $txName = $event->request->method() . ' ' . $event->request->path();
+        $manager = $event->sandbox->make(OctaneApmManager::class);
 
-        $transaction = ElasticApm::getCurrentTransaction();
-
-        if (! $transaction->hasEnded()) {
-            $transaction->discard();
-        }
-
-        $event->sandbox->instance(TransactionInterface::class, $transaction = ElasticApm::beginCurrentTransaction(
-            $txName,
-            'request'
-        ));
-        $event->sandbox->instance(SpanInterface::class, $transaction->beginChildSpan(
-            'RequestResponse',
-            'request'
-        ));
+        $manager->beginTransaction($event->request->method() . ' ' . $event->request->path());
+        $manager->beginAndStoreSpan('RequestResponse', 'request');
     }
 }
