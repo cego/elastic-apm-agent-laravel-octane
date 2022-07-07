@@ -3,15 +3,19 @@
 namespace Cego\ElasticApmAgentLaravelOctane;
 
 use Illuminate\Support\ServiceProvider;
+use Laravel\Octane\Events\TaskReceived;
+use Laravel\Octane\Events\TickReceived;
 use Laravel\Octane\Events\RequestHandled;
+use Laravel\Octane\Events\TaskTerminated;
+use Laravel\Octane\Events\TickTerminated;
 use Laravel\Octane\Events\WorkerStarting;
 use Laravel\Octane\Events\RequestReceived;
 use Illuminate\Contracts\Events\Dispatcher;
 use Laravel\Octane\Events\RequestTerminated;
 use Illuminate\Contracts\Container\BindingResolutionException;
+use Cego\ElasticApmAgentLaravelOctane\EventListeners\TickReceivedHandler;
 use Cego\ElasticApmAgentLaravelOctane\EventListeners\RequestHandledHandler;
-use Cego\ElasticApmAgentLaravelOctane\EventListeners\RequestReceivedHandler;
-use Cego\ElasticApmAgentLaravelOctane\EventListeners\RequestTerminatedHandler;
+use Cego\ElasticApmAgentLaravelOctane\EventListeners\DefaultTerminatedHandler;
 use Cego\ElasticApmAgentLaravelOctane\EventListeners\RequestWorkerStartHandler;
 
 class ElasticApmAgentLaravelOctaneServiceProvider extends ServiceProvider
@@ -42,9 +46,13 @@ class ElasticApmAgentLaravelOctaneServiceProvider extends ServiceProvider
         /** @var Dispatcher $dispatcher */
         $dispatcher = $this->app->make(Dispatcher::class);
 
-        $dispatcher->listen(RequestTerminated::class, RequestTerminatedHandler::class);
+        $dispatcher->listen(RequestTerminated::class, DefaultTerminatedHandler::class);
         $dispatcher->listen(RequestHandled::class, RequestHandledHandler::class);
-        $dispatcher->listen(RequestReceived::class, RequestReceivedHandler::class);
+        $dispatcher->listen(RequestReceived::class, TickReceivedHandler::class);
         $dispatcher->listen(WorkerStarting::class, RequestWorkerStartHandler::class);
+        $dispatcher->listen(TaskReceived::class, TickReceivedHandler::class);
+        $dispatcher->listen(TaskTerminated::class, DefaultTerminatedHandler::class);
+        $dispatcher->listen(TickReceived::class);
+        $dispatcher->listen(TickTerminated::class, DefaultTerminatedHandler::class);
     }
 }
