@@ -2,19 +2,18 @@
 
 namespace Cego\ElasticApmAgentLaravelOctane\EventListeners;
 
-use Laravel\Octane\Events\RequestTerminated;
 use Cego\ElasticApmAgentLaravelOctane\OctaneApmManager;
 
-class RequestTerminatedHandler
+class DefaultTerminatedHandler
 {
     /**
      * Handle the event.
      *
-     * @param  RequestTerminated  $event
+     * @param  object  $event
      *
      * @return void
      */
-    public function handle(RequestTerminated $event): void
+    public function handle(object $event): void
     {
         $event->sandbox->make(OctaneApmManager::class)->endTransaction();
     }
