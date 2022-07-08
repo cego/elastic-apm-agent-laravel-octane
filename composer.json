@@ -4,12 +4,12 @@
     "type": "library",
     "require": {
         "php": "^8.0",
-        "laravel/octane": "^1.2",
-      "ext-elastic_apm": "*"
+        "laravel/octane": "^1.2"
     },
     "require-dev": {
         "cego/php-cs-fixer": "^0.1.5",
-        "cego/phpstan": "^2.4"
+        "cego/phpstan": "^2.4",
+        "ext-elastic_apm": "*"
     },
     "license": "MIT",
     "autoload": {
