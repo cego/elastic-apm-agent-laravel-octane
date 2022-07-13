@@ -36,7 +36,7 @@ class OctaneApmManager
      */
     public function __construct()
     {
-        // Randomly disable the manager so only some requests are sampled
+        // Disable the manager if apm is not enabled
         $this->disabled = ! class_exists(ElasticApm::class);
     }
 
