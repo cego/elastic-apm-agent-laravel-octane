@@ -16,6 +16,10 @@ class RequestWorkerStartHandler
      */
     public function handle(WorkerStarting $event): void
     {
+        if( ! class_exists(ElasticApm::class)){
+            return;
+        }
+        
         $transaction = ElasticApm::getCurrentTransaction();
 
         if ( ! $transaction->hasEnded()) {
