@@ -37,7 +37,7 @@ class OctaneApmManager
     public function __construct()
     {
         // Randomly disable the manager so only some requests are sampled
-        $this->disabled = (mt_rand() / mt_getrandmax()) > env('ELASTIC_APM_TRANSACTION_SAMPLE_RATE', 0);
+        $this->disabled = ! class_exists(ElasticApm::class);
     }
 
     /**
