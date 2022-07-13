@@ -11,6 +11,13 @@ use Elastic\Apm\TransactionInterface;
 class OctaneApmManager
 {
     /**
+     * Dictates if the current request should be sampled.
+     *
+     * @var bool
+     */
+    private bool $disabled;
+
+    /**
      * The main outer transaction wrapping all child spans.
      *
      * @var TransactionInterface
@@ -25,6 +32,15 @@ class OctaneApmManager
     private array $spans = [];
 
     /**
+     * Constructor
+     */
+    public function __construct()
+    {
+        // Randomly disable the manager so only some requests are sampled
+        $this->disabled = ! class_exists(ElasticApm::class);
+    }
+
+    /**
      * Begins a new transaction or returns the current transaction
      *
      * @param string $name
@@ -34,6 +50,10 @@ class OctaneApmManager
      */
     public function beginTransaction(string $name, string $type): ?TransactionInterface
     {
+        if ($this->disabled) {
+            return null;
+        }
+
         // If there is a hanging transaction, then discard it.
         if ( ! isset($this->transaction) && ! ElasticApm::getCurrentTransaction()->hasEnded()) {
             ElasticApm::getCurrentTransaction()->discard();
@@ -52,6 +72,10 @@ class OctaneApmManager
      */
     public function beginAndStoreSpan(string $name, string $type): ?SpanInterface
     {
+        if ($this->disabled) {
+            return null;
+        }
+
         if ($this->hasNoTransactionInstance()) {
             throw new BadMethodCallException('Cannot start span without first starting a transaction');
         }
@@ -72,6 +96,10 @@ class OctaneApmManager
      */
     public function endStoredSpan(string $name): void
     {
+        if ($this->disabled) {
+            return;
+        }
+
         if ( ! isset($this->spans[$name])) {
             throw new InvalidArgumentException('No stored span with name [%s] exists');
         }
@@ -87,6 +115,10 @@ class OctaneApmManager
      */
     public function getTransaction(): ?TransactionInterface
     {
+        if ($this->disabled) {
+            return null;
+        }
+
         return $this->transaction ?? null;
     }
 
@@ -97,6 +129,10 @@ class OctaneApmManager
      */
     public function hasNoTransactionInstance(): bool
     {
+        if ($this->disabled) {
+            return true;
+        }
+
         return ! isset($this->transaction);
     }
 
@@ -107,6 +143,10 @@ class OctaneApmManager
      */
     public function endTransaction(): void
     {
+        if ($this->disabled) {
+            return;
+        }
+
         if ($this->hasNoTransactionInstance()) {
             throw new BadMethodCallException('Cannot start transaction before it has been started');
         }
