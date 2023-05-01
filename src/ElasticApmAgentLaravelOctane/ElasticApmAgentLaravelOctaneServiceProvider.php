@@ -29,8 +29,8 @@ class ElasticApmAgentLaravelOctaneServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // NOTE: It is NOT allowed to resolve the OctaneApmManager outside the sandbox.
-        // Doing this would make the Manager a singleton across all workers and thereby all requests.
+        // NOTE: This ApmManager is pre-warmed by the application and will be a singleton on a worker level
+        // and NOT on a request level. Meaning the instance is used across all requests the worker handles.
         $this->app->singleton(OctaneApmManager::class, function () {
             return new OctaneApmManager();
         });
@@ -56,5 +56,8 @@ class ElasticApmAgentLaravelOctaneServiceProvider extends ServiceProvider
         $dispatcher->listen(TaskTerminated::class, DefaultTerminatedHandler::class);
         $dispatcher->listen(TickReceived::class, TickReceivedHandler::class);
         $dispatcher->listen(TickTerminated::class, DefaultTerminatedHandler::class);
+
+        // Warm the octane APM manager, so it will persist across requests
+        $this->app->make(OctaneApmManager::class);
     }
 }
