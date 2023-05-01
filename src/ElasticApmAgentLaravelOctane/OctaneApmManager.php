@@ -4,6 +4,7 @@ namespace Cego\ElasticApmAgentLaravelOctane;
 
 use BadMethodCallException;
 use Elastic\Apm\ElasticApm;
+use Elastic\Apm\ExecutionSegmentInterface;
 use InvalidArgumentException;
 use Elastic\Apm\SpanInterface;
 use Elastic\Apm\TransactionInterface;
@@ -41,7 +42,9 @@ class OctaneApmManager
     }
 
     /**
-     * Begins a new transaction or returns the current transaction
+     * Begins a new transaction.
+     *
+     * Will discard any active transactions.
      *
      * @param string $name
      * @param string $type
@@ -54,12 +57,51 @@ class OctaneApmManager
             return null;
         }
 
+        $this->prepareForNextTransaction();
+
+        return $this->transaction = ElasticApm::beginCurrentTransaction($name, $type);
+    }
+
+    /**
+     * Prepares the manager and APM for the next request
+     *
+     * @return void
+     */
+    private function prepareForNextTransaction(): void
+    {
         // If there is a hanging transaction, then discard it.
-        if ( ! isset($this->transaction) && ! ElasticApm::getCurrentTransaction()->hasEnded()) {
-            ElasticApm::getCurrentTransaction()->discard();
+        $this->discardActiveSegments();
+        $this->resetManager();
+    }
+
+    /**
+     * Discards all currently active APM segments
+     *
+     * @return void
+     */
+    private function discardActiveSegments(): void
+    {
+        $this->discardSegment(ElasticApm::getCurrentTransaction());
+        $this->discardSegment(ElasticApm::getCurrentExecutionSegment());
+
+        if (isset($this->transaction)) {
+            $this->discardSegment($this->transaction);
         }
 
-        return $this->transaction ??= ElasticApm::beginCurrentTransaction($name, $type);
+        foreach ($this->spans as $span) {
+            $this->discardSegment($span);
+        }
+    }
+
+    /**
+     * Resets the manager state, so all stored variables are cleared.
+     *
+     * @return void
+     */
+    private function resetManager(): void
+    {
+        unset($this->transaction);
+        $this->spans = [];
     }
 
     /**
@@ -104,7 +146,7 @@ class OctaneApmManager
             throw new InvalidArgumentException('No stored span with name [%s] exists');
         }
 
-        $this->spans[$name]->end();
+        $this->endSegment($this->spans[$name]);
         unset($this->spans[$name]);
     }
 
@@ -120,6 +162,17 @@ class OctaneApmManager
         }
 
         return $this->transaction ?? null;
+    }
+
+    /**
+     * Set the result of the transaction
+     *
+     * @param string|null $result
+     * @return void
+     */
+    public function setTransactionResult(?string $result): void
+    {
+        $this->getTransaction()?->setResult($result);
     }
 
     /**
@@ -151,8 +204,40 @@ class OctaneApmManager
             throw new BadMethodCallException('Cannot start transaction before it has been started');
         }
 
-        if ( ! $this->transaction->hasEnded()) {
-            $this->transaction->end();
+        foreach (array_keys($this->spans) as $spanKey) {
+            $this->endStoredSpan($spanKey);
         }
+
+        $this->endSegment($this->transaction);
+    }
+
+    /**
+     * Discards the given execution segment
+     *
+     * @param ExecutionSegmentInterface $segment
+     * @return void
+     */
+    private function discardSegment(ExecutionSegmentInterface $segment): void
+    {
+        if ($segment->hasEnded()) {
+            return;
+        }
+
+        $segment->discard();
+    }
+
+    /**
+     * Ends the given execution segment
+     *
+     * @param ExecutionSegmentInterface $segment
+     * @return void
+     */
+    private function endSegment(ExecutionSegmentInterface $segment): void
+    {
+        if ($segment->hasEnded()) {
+            return;
+        }
+
+        $segment->end();
     }
 }
