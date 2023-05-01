@@ -20,7 +20,7 @@ class DefaultTerminatedHandler
         $manager = $event->sandbox->make(OctaneApmManager::class);
 
         if ($event instanceof RequestTerminated) {
-            $manager->getTransaction()?->setResult($this->getHttpResult($event));
+            $manager->setTransactionResult($this->getHttpResult($event));
         }
 
         $manager->endTransaction();
