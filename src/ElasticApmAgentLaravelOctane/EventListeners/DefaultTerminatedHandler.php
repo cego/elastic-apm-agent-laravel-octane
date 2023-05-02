@@ -17,7 +17,7 @@ class DefaultTerminatedHandler
     public function handle(object $event): void
     {
         /** @var OctaneApmManager $manager */
-        $manager = $event->sandbox->make(OctaneApmManager::class);
+        $manager = $event->app->make(OctaneApmManager::class);
 
         if ($event instanceof RequestTerminated) {
             $manager->setTransactionResult($this->getHttpResult($event));
