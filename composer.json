@@ -9,7 +9,7 @@
     "require-dev": {
         "cego/php-cs-fixer": "^0.1.5",
         "cego/phpstan": "^2.4",
-        "ext-elastic_apm": "*"
+        "ext-elastic_apm": "^1.8.1"
     },
     "license": "MIT",
     "autoload": {
