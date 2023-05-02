@@ -5,10 +5,6 @@ A Laravel package for elastic apm agent running on octane
 ## Install
 `composer require cego/elastic-apm-agent-laravel-octane`
 
-If you are having issues with transactions not being sent to the APM server, please try disabling async APM backend, for example by setting the following env:
-
-`ELASTIC_APM_ASYNC_BACKEND_COMM=false`
-
 
 ## Contributing
 You are welcome to open issues and pull request, please describe the issues and pull requests carefully to enable our understanding of the issue.
