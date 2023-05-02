@@ -21,7 +21,12 @@ class RequestReceivedHandler
         /** @var OctaneApmManager $manager */
         $manager = $event->app->make(OctaneApmManager::class);
 
-        $manager->beginTransaction($event->request->method() . ' /' . $this->getRouteUri($event), 'request');        
+        $routeUri = $this->getRouteUri($event);
+        if ($routeUri === "/") {
+           $manager->beginTransaction($event->request->method() . ' /', 'request');
+        } else {
+           $manager->beginTransaction($event->request->method() . ' /' . $routeUri, 'request');
+        }        
     }
 
     /**
