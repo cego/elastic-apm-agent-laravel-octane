@@ -5,9 +5,12 @@ namespace Cego\ElasticApmAgentLaravelOctane;
 use BadMethodCallException;
 use Elastic\Apm\ElasticApm;
 use Elastic\Apm\ExecutionSegmentInterface;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 use Elastic\Apm\SpanInterface;
 use Elastic\Apm\TransactionInterface;
+use Laravel\Octane\Swoole\WorkerState;
 
 class OctaneApmManager
 {
@@ -32,13 +35,19 @@ class OctaneApmManager
      */
     private array $spans = [];
 
+    private static $knownTransactionIds = [];
+
+    private static $knownTraceIds = [];
+
+    public int $transactionCount = 0;
+
     /**
      * Constructor
      */
     public function __construct()
     {
         // Randomly disable the manager so only some requests are sampled
-        $this->disabled = ! class_exists(ElasticApm::class);
+        $this->disabled = !class_exists(ElasticApm::class);
     }
 
     /**
@@ -59,10 +68,32 @@ class OctaneApmManager
 
         $this->prepareForNextTransaction();
 
-        return $this->transaction = ElasticApm::newTransaction($name, $type)
-            ->distributedTracingHeaderExtractor(fn () => null)
+        $this->transactionCount++;
+
+        $this->transaction = ElasticApm::newTransaction($name, $type)
+            ->distributedTracingHeaderExtractor(fn() => Str::random(32))
             ->asCurrent()
             ->begin();
+
+        if (in_array($this->transaction->getId(), static::$knownTransactionIds)) {
+            $this->log('DUPLICATED TRANSACTION ID');
+        } else {
+            static::$knownTransactionIds[] = $this->transaction->getId();
+        }
+
+        if (in_array($this->transaction->getTraceId(), static::$knownTraceIds)) {
+            $this->log('DUPLICATED TRACE ID');
+        } else {
+            static::$knownTraceIds[] = $this->transaction->getTraceId();
+        }
+
+        if ($this->transaction->getParentId() !== null) {
+            $this->log('Transaction has parent id?!');
+        }
+
+        $this->log(__METHOD__);
+
+        return $this->transaction;
     }
 
     /**
@@ -72,6 +103,8 @@ class OctaneApmManager
      */
     private function prepareForNextTransaction(): void
     {
+        $this->log(__METHOD__);
+
         // If there is a hanging transaction, then discard it.
         $this->discardActiveSegments();
         $this->resetManager();
@@ -84,6 +117,8 @@ class OctaneApmManager
      */
     private function discardActiveSegments(): void
     {
+        $this->log(__METHOD__);
+
         $this->discardSegment(ElasticApm::getCurrentTransaction());
         $this->discardSegment(ElasticApm::getCurrentExecutionSegment());
 
@@ -105,6 +140,8 @@ class OctaneApmManager
     {
         unset($this->transaction);
         $this->spans = [];
+
+        Log::withoutContext();
     }
 
     /**
@@ -117,6 +154,8 @@ class OctaneApmManager
      */
     public function beginAndStoreSpan(string $name, string $type): ?SpanInterface
     {
+        $this->log(__METHOD__);
+
         if ($this->disabled) {
             return null;
         }
@@ -141,11 +180,13 @@ class OctaneApmManager
      */
     public function endStoredSpan(string $name): void
     {
+        $this->log(__METHOD__);
+
         if ($this->disabled) {
             return;
         }
 
-        if ( ! isset($this->spans[$name])) {
+        if (!isset($this->spans[$name])) {
             throw new InvalidArgumentException('No stored span with name [%s] exists');
         }
 
@@ -175,6 +216,8 @@ class OctaneApmManager
      */
     public function setTransactionResult(?string $result): void
     {
+        $this->log(__METHOD__);
+
         $this->getTransaction()?->setResult($result);
     }
 
@@ -185,11 +228,13 @@ class OctaneApmManager
      */
     public function hasNoTransactionInstance(): bool
     {
+        $this->log(__METHOD__);
+
         if ($this->disabled) {
             return true;
         }
 
-        return ! isset($this->transaction);
+        return !isset($this->transaction);
     }
 
     /**
@@ -199,6 +244,8 @@ class OctaneApmManager
      */
     public function endTransaction(): void
     {
+        $this->log(__METHOD__);
+
         if ($this->disabled) {
             return;
         }
@@ -212,6 +259,7 @@ class OctaneApmManager
         }
 
         $this->endSegment($this->transaction);
+        $this->resetManager();
     }
 
     /**
@@ -222,6 +270,8 @@ class OctaneApmManager
      */
     private function discardSegment(ExecutionSegmentInterface $segment): void
     {
+        $this->log(__METHOD__);
+
         if ($segment->hasEnded()) {
             return;
         }
@@ -237,10 +287,35 @@ class OctaneApmManager
      */
     private function endSegment(ExecutionSegmentInterface $segment): void
     {
+        $this->log(__METHOD__);
+
         if ($segment->hasEnded()) {
             return;
         }
 
         $segment->end();
+    }
+
+    private function log(string $message): void
+    {
+        $workerState = resolve(WorkerState::class);
+
+        Log::info($message, [
+            'transaction' => [
+                'id'        => $this->getTransaction()?->getId(),
+                'trace'     => $this->getTransaction()?->getTraceId(),
+                'parent_id' => $this->getTransaction()?->getParentId(),
+                'count'     => $this->transactionCount,
+            ],
+            'process'     => [
+                'pid' => getmypid(),
+                'gid' => getmygid(),
+            ],
+            'worker'      => [
+                'id'            => $workerState->workerId,
+                'pid'           => $workerState->workerPid,
+                'spl_object_id' => spl_object_id($workerState->worker),
+            ]
+        ]);
     }
 }
