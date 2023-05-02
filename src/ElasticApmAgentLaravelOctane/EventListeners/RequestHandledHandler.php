@@ -16,6 +16,6 @@ class RequestHandledHandler
      */
     public function handle(RequestHandled $event): void
     {
-        $event->app->make(OctaneApmManager::class)->endStoredSpan('RequestResponse');
+        $event->sandbox->make(OctaneApmManager::class)->endStoredSpan('RequestResponse');
     }
 }
