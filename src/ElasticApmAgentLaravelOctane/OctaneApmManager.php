@@ -59,7 +59,10 @@ class OctaneApmManager
 
         $this->prepareForNextTransaction();
 
-        return $this->transaction = ElasticApm::beginCurrentTransaction($name, $type);
+        return $this->transaction = ElasticApm::newTransaction($name, $type)
+            ->distributedTracingHeaderExtractor(fn () => null)
+            ->asCurrent()
+            ->begin();
     }
 
     /**
