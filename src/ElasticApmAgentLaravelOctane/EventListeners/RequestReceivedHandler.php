@@ -18,7 +18,8 @@ class RequestReceivedHandler
      */
     public function handle(RequestReceived $event): void
     {
-        $manager = $event->sandbox->make(OctaneApmManager::class);
+        /** @var OctaneApmManager $manager */
+        $manager = $event->app->make(OctaneApmManager::class);
 
         $manager->beginTransaction($event->request->method() . ' ' . $this->getRouteUri($event), 'request');
         $manager->beginAndStoreSpan('RequestResponse', 'request');

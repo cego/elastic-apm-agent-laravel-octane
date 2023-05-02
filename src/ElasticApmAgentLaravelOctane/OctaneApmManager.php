@@ -7,6 +7,7 @@ use Elastic\Apm\ElasticApm;
 use InvalidArgumentException;
 use Elastic\Apm\SpanInterface;
 use Elastic\Apm\TransactionInterface;
+use Elastic\Apm\ExecutionSegmentInterface;
 
 class OctaneApmManager
 {
@@ -37,11 +38,13 @@ class OctaneApmManager
     public function __construct()
     {
         // Randomly disable the manager so only some requests are sampled
-        $this->disabled = ! class_exists(ElasticApm::class);
+        $this->disabled = !class_exists(ElasticApm::class);
     }
 
     /**
-     * Begins a new transaction or returns the current transaction
+     * Begins a new transaction.
+     *
+     * Will discard any active transactions.
      *
      * @param string $name
      * @param string $type
@@ -54,12 +57,51 @@ class OctaneApmManager
             return null;
         }
 
+        $this->prepareForNextTransaction();
+
+        return $this->transaction = ElasticApm::beginCurrentTransaction($name, $type);
+    }
+
+    /**
+     * Prepares the manager and APM for the next request
+     *
+     * @return void
+     */
+    private function prepareForNextTransaction(): void
+    {
         // If there is a hanging transaction, then discard it.
-        if ( ! isset($this->transaction) && ! ElasticApm::getCurrentTransaction()->hasEnded()) {
-            ElasticApm::getCurrentTransaction()->discard();
+        $this->discardActiveSegments();
+        $this->resetManager();
+    }
+
+    /**
+     * Discards all currently active APM segments
+     *
+     * @return void
+     */
+    private function discardActiveSegments(): void
+    {
+        $this->discardSegment(ElasticApm::getCurrentTransaction());
+        $this->discardSegment(ElasticApm::getCurrentExecutionSegment());
+
+        if (isset($this->transaction)) {
+            $this->discardSegment($this->transaction);
         }
 
-        return $this->transaction ??= ElasticApm::beginCurrentTransaction($name, $type);
+        foreach ($this->spans as $span) {
+            $this->discardSegment($span);
+        }
+    }
+
+    /**
+     * Resets the manager state, so all stored variables are cleared.
+     *
+     * @return void
+     */
+    private function resetManager(): void
+    {
+        unset($this->transaction);
+        $this->spans = [];
     }
 
     /**
@@ -100,11 +142,11 @@ class OctaneApmManager
             return;
         }
 
-        if ( ! isset($this->spans[$name])) {
+        if (!isset($this->spans[$name])) {
             throw new InvalidArgumentException('No stored span with name [%s] exists');
         }
 
-        $this->spans[$name]->end();
+        $this->endSegment($this->spans[$name]);
         unset($this->spans[$name]);
     }
 
@@ -123,6 +165,17 @@ class OctaneApmManager
     }
 
     /**
+     * Set the result of the transaction
+     *
+     * @param string|null $result
+     * @return void
+     */
+    public function setTransactionResult(?string $result): void
+    {
+        $this->getTransaction()?->setResult($result);
+    }
+
+    /**
      * Returns true if there exists a transaction instance within the manager
      *
      * @return bool
@@ -133,7 +186,7 @@ class OctaneApmManager
             return true;
         }
 
-        return ! isset($this->transaction);
+        return !isset($this->transaction);
     }
 
     /**
@@ -151,8 +204,43 @@ class OctaneApmManager
             throw new BadMethodCallException('Cannot start transaction before it has been started');
         }
 
-        if ( ! $this->transaction->hasEnded()) {
-            $this->transaction->end();
+        foreach (array_keys($this->spans) as $spanKey) {
+            $this->endStoredSpan($spanKey);
         }
+
+        $this->endSegment($this->transaction);
+        $this->resetManager();
+    }
+
+    /**
+     * Discards the given execution segment
+     *
+     * @param ExecutionSegmentInterface $segment
+     *
+     * @return void
+     */
+    private function discardSegment(ExecutionSegmentInterface $segment): void
+    {
+        if ($segment->hasEnded()) {
+            return;
+        }
+
+        $segment->discard();
+    }
+
+    /**
+     * Ends the given execution segment
+     *
+     * @param ExecutionSegmentInterface $segment
+     *
+     * @return void
+     */
+    private function endSegment(ExecutionSegmentInterface $segment): void
+    {
+        if ($segment->hasEnded()) {
+            return;
+        }
+
+        $segment->end();
     }
 }
