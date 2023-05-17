@@ -4,7 +4,7 @@
     "type": "library",
     "require": {
         "php": "^8.0",
-        "laravel/octane": "^1.5"
+        "laravel/octane": "^1.5|^2.0"
     },
     "require-dev": {
         "cego/php-cs-fixer": "^0.1.5",
